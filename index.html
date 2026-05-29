@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelTime 等時圈產生器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 額外的精細樣式調整 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <div class="max-w-6xl w-full mx-auto px-4 py-8 flex-grow">
+        <header
+            class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-3 rounded-xl shadow-md shadow-blue-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">TravelTime 等時圈產生器</h1>
+                    <p class="text-sm text-slate-500">上傳座標・批次轉換</p>
+                </div>
+            </div>
+
+            <button id="open-info-btn"
+                class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition font-medium text-sm">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                使用說明與 API 限制
+            </button>
+        </header>
+
+        <div id="alert-banner"
+            class="hidden mb-6 p-4 rounded-xl border flex items-start gap-3 transition-all duration-300">
+            <span id="alert-icon" class="flex-shrink-0 mt-0.5"></span>
+            <div class="flex-grow">
+                <h4 id="alert-title" class="font-bold text-sm"></h4>
+                <p id="alert-message" class="text-xs mt-1"></p>
+            </div>
+            <button id="close-alert-btn" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <section class="lg:col-span-5 flex flex-col gap-6">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col gap-4">
+                    <h2
+                        class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-2 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        參數與金鑰設定
+                    </h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label for="api-id" class="text-xs font-bold text-slate-600">TravelTime API ID</label>
+                            <input type="text" id="api-id" placeholder="Application ID"
+                                class="border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label for="api-key" class="text-xs font-bold text-slate-600">TravelTime API KEY</label>
+                            <input type="password" id="api-key" placeholder="API Key"
+                                class="border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label for="travel-time" class="text-xs font-bold text-slate-600">等時圈範圍 (分鐘)</label>
+                            <input type="number" id="travel-time" value="10" min="1"
+                                class="border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label for="transport-type" class="text-xs font-bold text-slate-600">主要交通工具</label>
+                            <select id="transport-type"
+                                class="border border-slate-200 bg-white rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                                <option value="walking">🚶 步行 (walking)</option>
+                                <option value="cycling">🚲 自行車 (cycling)</option>
+                                <option value="driving">🚗 開車 (driving)</option>
+                                <option value="public_transport">🚇 大眾運輸 (public_transport)</option>
+
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5 mt-2">
+                        <label class="text-xs font-bold text-slate-600">選擇座標 CSV 檔案</label>
+                        <div class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl p-6 transition text-center cursor-pointer relative"
+                            id="drop-zone">
+                            <input type="file" id="csv-file" accept=".csv"
+                                class="absolute inset-0 opacity-0 cursor-pointer">
+                            <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                </path>
+                            </svg>
+                            <p class="text-sm font-semibold text-slate-700" id="file-name-display">點擊上傳或拖曳 CSV 到此處</p>
+                            <p class="text-xs text-slate-400 mt-1">需包含 id, x, y 欄位</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <span class="text-xs text-slate-500">不確定 CSV 欄位寫法？</span>
+                        <button id="download-template-btn"
+                            class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            下載範例 CSV
+                        </button>
+                    </div>
+
+                    <button id="start-btn"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 shadow-lg shadow-blue-200 active:transform active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed">
+                        🚀 依座標資料產生等時圈
+                    </button>
+                </div>
+            </section>
+
+            <section class="lg:col-span-7 flex flex-col gap-6">
+                <div id="status-box"
+                    class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden flex-col gap-4">
+                    <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <span class="relative flex h-3 w-3">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
+                        </span>
+                        任務進度與分析結果
+                    </h3>
+
+                    <div class="flex items-center justify-between">
+                        <span id="status-summary" class="font-semibold text-slate-700">準備中...</span>
+                        <span id="progress-percent" class="text-sm font-bold text-blue-600">0%</span>
+                    </div>
+
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                            style="width: 0%"></div>
+                    </div>
+
+                    <div id="download-area" class="hidden flex-wrap gap-3 pt-2">
+                        <button id="download-geojson-btn"
+                            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"></path>
+                            </svg>
+                            下載等時圈 GeoJSON
+                        </button>
+                        <button id="download-failed-btn"
+                            class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-rose-100 hidden">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                </path>
+                            </svg>
+                            下載失敗清單 CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 p-6 flex flex-col gap-3 flex-grow min-h-[350px]">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                        <h3 class="text-sm font-bold text-slate-400 tracking-wider uppercase flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            執行狀態主控台 (Live Logs)
+                        </h3>
+                        <button id="clear-log-btn"
+                            class="text-xs text-slate-500 hover:text-slate-300 transition">清除日誌</button>
+                    </div>
+                    <div id="log-container"
+                        class="font-mono text-xs text-slate-300 leading-relaxed overflow-y-auto h-[280px] custom-scrollbar flex flex-col gap-1.5 pr-2">
+                        <span class="text-slate-500">// 系統已就緒，請填入設定並上傳 CSV 後點擊開始...</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-100 py-4 text-center text-xs text-slate-400">
+        版權&copy; 2026 07622 | Sinotech
+    </footer>
+
+    <div id="info-modal"
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-xl w-full mx-4 overflow-hidden transform translate-y-4 transition-transform duration-300"
+            id="modal-box">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                        </path>
+                    </svg>
+                    TravelTime 工具使用說明與限制
+                </h3>
+                <button id="close-info-btn"
+                    class="text-slate-400 hover:text-slate-600 text-2xl font-semibold leading-none">&times;</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto max-h-[70vh] flex flex-col gap-5 text-sm text-slate-600 leading-relaxed">
+                <div>
+                    <h4 class="font-bold text-slate-900 flex items-center gap-1.5 mb-1 text-blue-600">1. CSV 檔案格式規範</h4>
+                    <p>上傳的 CSV 檔案必須包含以下三個主要欄位（不區分大小寫，系統會自動轉換欄位字元）：</p>
+                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                        <li><strong>id</strong>：點位的唯一識別碼（文字或數字，不可重複）。</li>
+                        <li><strong>x</strong>：經度 (Longitude)，如：<code>121.517</code>。</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 flex items-center gap-1.5 mb-1 text-rose-600">2. 流量與頻率限制 (Rate
+                        Limits)</h4>
+                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                        <li><strong>防爆流量保護 (429 避讓)</strong>：為避免觸發 TravelTime API 對免費與一般標準方案設定的每分鐘頻率管制（429 Too Many
+                            Requests），本產生器在每個點位請求完成後，皆會<strong>自動溫和冷卻 2 秒</strong>。</li>
+                        <li><strong>原地自動休眠重試</strong>：若不幸觸發了伺服器的 429 限制，主控台會輸出警示，並<strong>自動原地暫停 65
+                                秒</strong>後再次發送，請不要關閉或重整網頁。</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 flex items-center gap-1.5 mb-1 text-emerald-600">3. 大眾運輸工具注意事項
+                    </h4>
+                    <p>當交通方式設定為「大眾運輸 (public_transport)」時，API 會精確比對全球 <strong>GTFS 動態排班表資料</strong>，其運算複雜度與時間較高屬正常情況。
+                    </p>
+                </div>
+
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <p class="font-bold text-slate-800 text-xs">需要獲取 API 金鑰或進行規格對照？</p>
+                        <p class="text-xs text-slate-500 mt-0.5">您可以前往 TravelTime 官網進行註冊與詳閱產品。 </p>
+                    </div>
+                    <a href="https://traveltime.com/" target="_blank"
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition shrink-0">造訪官網
+                        &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // UI 控制元素
+            const infoModal = document.getElementById('info-modal');
+            const modalBox = document.getElementById('modal-box');
+            const openInfoBtn = document.getElementById('open-info-btn');
+            const closeInfoBtn = document.getElementById('close-info-btn');
+
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('csv-file');
+            const fileNameDisplay = document.getElementById('file-name-display');
+            const downloadTemplateBtn = document.getElementById('download-template-btn');
+            const startBtn = document.getElementById('start-btn');
+
+            const statusBox = document.getElementById('status-box');
+            const statusSummary = document.getElementById('status-summary');
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const downloadArea = document.getElementById('download-area');
+            const downloadGeojsonBtn = document.getElementById('download-geojson-btn');
+            const downloadFailedBtn = document.getElementById('download-failed-btn');
+
+            const logContainer = document.getElementById('log-container');
+            const clearLogBtn = document.getElementById('clear-log-btn');
+
+            const alertBanner = document.getElementById('alert-banner');
+            const alertIcon = document.getElementById('alert-icon');
+            const alertTitle = document.getElementById('alert-title');
+            const alertMessage = document.getElementById('alert-message');
+            const closeAlertBtn = document.getElementById('close-alert-btn');
+
+            // API 參數控制
+            const SLEEP_MS = 2000;
+            const RETRY_429_MS = 65000;
+            let finalFeatures = [];
+            let failedList = [];
+
+            // 1. ℹ️ 說明彈窗控制
+            const openModal = () => {
+                infoModal.classList.remove('pointer-events-none', 'opacity-0');
+                infoModal.classList.add('opacity-100');
+                modalBox.classList.remove('translate-y-4');
+                modalBox.classList.add('translate-y-0');
+            };
+
+            const closeModal = () => {
+                infoModal.classList.add('pointer-events-none', 'opacity-0');
+                infoModal.classList.remove('opacity-100');
+                modalBox.classList.remove('translate-y-0');
+                modalBox.classList.add('translate-y-4');
+            };
+
+            openInfoBtn.addEventListener('click', openModal);
+            closeInfoBtn.addEventListener('click', closeModal);
+            infoModal.addEventListener('click', (e) => {
+                if (e.target === infoModal) closeModal();
+            });
+
+            // 2. 檔案拖曳與選擇視覺回饋 (💡 已修復拖曳無反應問題)
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = `已選擇：${fileInput.files[0].name}`;
+                    fileNameDisplay.classList.add('text-blue-600');
+                    writeLog(`📂 成功透過點選載入檔案：${fileInput.files[0].name}`);
+                }
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-blue-500', 'bg-blue-50/20');
+                }, false);
+            });
+
+            ['dragleave'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-blue-500', 'bg-blue-50/20');
+                }, false);
+            });
+
+            // 💡 關鍵：處理放開滑鼠事件並阻擋瀏覽器預設跳轉
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50/20');
+
+                if (e.dataTransfer.files.length > 0) {
+                    // 將拖曳獲取的檔案賦值給 input 節點
+                    fileInput.files = e.dataTransfer.files;
+                    fileNameDisplay.textContent = `已選擇：${fileInput.files[0].name}`;
+                    fileNameDisplay.classList.add('text-blue-600');
+                    writeLog(`📂 成功透過拖曳載入檔案：${fileInput.files[0].name}`, 'success');
+                }
+            });
+
+            // 3. 自訂警告提示訊息
+            function showAlert(title, message, type = 'error') {
+                alertBanner.classList.remove('hidden', 'bg-red-50', 'border-red-200', 'text-red-800', 'bg-blue-50', 'border-blue-200', 'text-blue-800');
+
+                if (type === 'error') {
+                    alertBanner.classList.add('bg-red-50', 'border-red-200', 'text-red-800');
+                    alertIcon.innerHTML = `
+                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    `;
+                } else {
+                    alertBanner.classList.add('bg-blue-50', 'border-blue-200', 'text-blue-800');
+                    alertIcon.innerHTML = `
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    `;
+                }
+
+                alertTitle.textContent = title;
+                alertMessage.textContent = message;
+                alertBanner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            closeAlertBtn.addEventListener('click', () => {
+                alertBanner.classList.add('hidden');
+            });
+
+            // 4. 下載範例 CSV
+            downloadTemplateBtn.addEventListener('click', () => {
+                const csvContent = "\ufeffid,x,y\n" +
+                    "台北車站,121.5170,25.0478\n" +
+                    "台北101,121.5644,25.0339\n" +
+                    "板橋車站,121.4626,25.0130";
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'example_locations.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+                writeLog('📥 已下載範例 CSV (含 BOM 編碼以防止中文亂碼)。', 'success');
+            });
+
+            // 5. 日誌操作
+            function writeLog(message, type = '') {
+                const span = document.createElement('span');
+                const timeStr = new Date().toLocaleTimeString();
+                span.innerHTML = `<span class="text-slate-500">[${timeStr}]</span> `;
+
+                if (type === 'success') {
+                    span.innerHTML += `<span class="text-emerald-400">${message}</span>`;
+                } else if (type === 'warning') {
+                    span.innerHTML += `<span class="text-amber-400">${message}</span>`;
+                } else if (type === 'error') {
+                    span.innerHTML += `<span class="text-rose-400">${message}</span>`;
+                } else {
+                    span.innerHTML += `<span class="text-slate-200">${message}</span>`;
+                }
+
+                logContainer.appendChild(span);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            clearLogBtn.addEventListener('click', () => {
+                logContainer.innerHTML = '<span class="text-slate-500">// 控制台已清空。</span>';
+            });
+
+            // 輔助休眠方法
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            // 6. 解析 CSV 資料
+            function parseCSV(text) {
+                const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+                if (lines.length === 0) return [];
+
+                // 標頭清理：去空白、轉小寫
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                const idIdx = headers.indexOf('id');
+                const xIdx = headers.indexOf('x');
+                const yIdx = headers.indexOf('y');
+
+                if (idIdx === -1 || xIdx === -1 || yIdx === -1) {
+                    showAlert("CSV 格式解析錯誤", "CSV 標頭必須包含 'id', 'x', 'y' 三個必填欄位。請下載範例 CSV 進行對照。");
+                    return null;
+                }
+
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',');
+                    if (cols.length >= 3) {
+                        data.push({
+                            id: cols[idIdx]?.trim(),
+                            x: parseFloat(cols[xIdx]?.trim()),
+                            y: parseFloat(cols[yIdx]?.trim())
+                        });
+                    }
+                }
+                return data;
+            }
+
+            // 7. 開始核心 API 跑等時圈作業
+            startBtn.addEventListener('click', async () => {
+                alertBanner.classList.add('hidden');
+                const apiId = document.getElementById('api-id').value.trim();
+                const apiKey = document.getElementById('api-key').value.trim();
+                const travelMinutes = parseInt(document.getElementById('travel-time').value);
+                const transportType = document.getElementById('transport-type').value;
+
+                if (!apiId || !apiKey) {
+                    showAlert("請填入 API 設定", "請先提供 TravelTime 的 Application ID 與 API Key 才能發起請求。");
+                    return;
+                }
+                if (fileInput.files.length === 0) {
+                    showAlert("請選取點位 CSV", "您尚未選擇上傳任何點位 CSV 檔案。");
+                    return;
+                }
+
+                // UI 狀態初始化
+                startBtn.disabled = true;
+                logContainer.innerHTML = '';
+                statusBox.classList.remove('hidden');
+                statusBox.classList.add('flex');
+                statusSummary.innerHTML = '🔄 讀取並解析 CSV 檔案中...';
+                downloadArea.classList.add('hidden');
+                downloadFailedBtn.classList.add('hidden');
+
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0%';
+
+                finalFeatures = [];
+                failedList = [];
+
+                const file = fileInput.files[0];
+                let text;
+                try {
+                    text = await file.text();
+                } catch (e) {
+                    showAlert("檔案讀取錯誤", "無法讀取該 CSV 檔案，請確定檔案無毀損。");
+                    startBtn.disabled = false;
+                    return;
+                }
+
+                const points = parseCSV(text);
+                if (!points || points.length === 0) {
+                    writeLog('❌ CSV 載入失敗或無可用點位資料。', 'error');
+                    startBtn.disabled = false;
+                    statusSummary.innerHTML = '❌ 執行中止';
+                    return;
+                }
+
+                const totalPoints = points.length;
+                writeLog(`📊 成功載入 ${totalPoints} 個點位。啟動直擊座標階層修正模式...`, 'success');
+
+                const url = "https://api.traveltimeapp.com/v4/time-map";
+                const headers = {
+                    "X-Application-Id": apiId,
+                    "X-Api-Key": apiKey,
+                    "Accept": "application/geo+json",
+                    "Content-Type": "application/json"
+                };
+
+                // 逐點呼叫 API
+                for (let i = 0; i < points.length; i++) {
+                    const pt = points[i];
+                    const currentCount = i + 1;
+                    const travelTimeSeconds = travelMinutes * 60;
+                    const currentTime = new Date().toISOString();
+
+                    const payload = {
+                        "departure_searches": [
+                            {
+                                "id": `isochrone_${pt.id}`,
+                                "coords": { "lat": pt.y, "lng": pt.x },
+                                "departure_time": currentTime,
+                                "travel_time": travelTimeSeconds,
+                                "transportation": { "type": transportType },
+                                "level_of_detail": {
+                                    "scale_type": "simple_numeric",
+                                    "level": 0
+                                }
+                            }
+                        ]
+                    };
+
+                    let success = false;
+                    let retry429Count = 0;
+
+                    while (!success) {
+                        statusSummary.innerHTML = `🔄 正在處理：點位 ${pt.id} (${currentCount}/${totalPoints})`;
+                        writeLog(`[${currentCount}/${totalPoints}] 發送點位: ${pt.id} ... `);
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: headers,
+                                body: JSON.stringify(payload)
+                            });
+
+                            if (response.status === 200) {
+                                const resJson = await response.json();
+                                if (resJson && resJson.features && resJson.features.length > 0) {
+                                    writeLog(`✨ [成功] 取得多邊形`, 'success');
+                                    resJson.features.forEach(f => {
+                                        if (!f.properties) f.properties = {};
+                                        f.properties.location_id = pt.id;
+                                        f.properties.time_minutes = travelMinutes;
+                                        finalFeatures.push(f);
+                                    });
+                                } else {
+                                    writeLog(`⚠️ [空值] API 未回傳有效的等時圈形狀`, 'warning');
+                                    failedList.push({ id: pt.id, reason: 'Empty features' });
+                                }
+                                success = true;
+                                await sleep(SLEEP_MS);
+
+                            } else if (response.status === 429) {
+                                retry429Count++;
+                                writeLog(`⚠️ [429 流量管制] (第 ${retry429Count} 次)。開始原地自動冷卻 65 秒後重試...`, 'warning');
+                                await sleep(RETRY_429_MS);
+                            } else {
+                                const errText = await response.text();
+                                writeLog(`❌ [失敗] API 錯誤碼 ${response.status}: ${errText}`, 'error');
+                                failedList.push({ id: pt.id, reason: `HTTP ${response.status}` });
+                                success = true;
+                                await sleep(SLEEP_MS);
+                            }
+
+                        } catch (err) {
+                            writeLog(`❌ [網路錯誤] 原因: ${err.message}`, 'error');
+                            failedList.push({ id: pt.id, reason: err.message });
+                            success = true;
+                            await sleep(SLEEP_MS);
+                        }
+                    }
+
+                    const percent = Math.round((currentCount / totalPoints) * 100);
+                    progressBar.style.width = `${percent}%`;
+                    progressPercent.textContent = `${percent}%`;
+                }
+
+                const successCount = totalPoints - failedList.length;
+                writeLog("<br>=================== 📝 執行結果對帳表 ===================", 'success');
+                writeLog(` 🟢 成功獲取數: ${successCount} / ${totalPoints}`, 'success');
+                writeLog(` 🔴 失敗與遺漏數: ${failedList.length} / ${totalPoints}`, failedList.length > 0 ? 'error' : 'success');
+                writeLog("========================================================", 'success');
+
+                statusSummary.innerHTML = `🎉 任務完成！成功: ${successCount} 筆，失敗: ${failedList.length} 筆`;
+                downloadArea.classList.remove('hidden');
+
+                if (finalFeatures.length > 0) {
+                    downloadGeojsonBtn.onclick = () => {
+                        const geoJsonOutput = { "type": "FeatureCollection", "features": finalFeatures };
+                        const blob = new Blob([JSON.stringify(geoJsonOutput, null, 2)], { type: 'application/geo+json;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `output_isochrones_${travelMinutes}mins_${transportType}.geojson`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    };
+                }
+
+                if (failedList.length > 0) {
+                    downloadFailedBtn.classList.remove('hidden');
+                    downloadFailedBtn.onclick = () => {
+                        let csvContent = "\ufeffid,reason\n" + failedList.map(e => `"${e.id}","${e.reason}"`).join("\n");
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `failed_locations.csv`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    };
+                } else {
+                    downloadFailedBtn.classList.add('hidden');
+                }
+
+                startBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+
+</html>
