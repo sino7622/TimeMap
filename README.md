@@ -1,4 +1,4 @@
-# 🌍 TravelTime 等時圈產生器 (TravelTime Isochrone Helper)
+# 🌍 TravelTime 等時圈產生器
 
 ![WebGIS](https://img.shields.io/badge/Category-WebGIS-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
