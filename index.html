@@ -259,8 +259,8 @@
                         Limits)</h4>
                     <ul class="list-disc pl-5 mt-1 space-y-1">
                         <li><strong>請求流量保護</strong>：為避免觸發 TravelTime API 對免費與一般標準方案設定的每分鐘頻率管制（免費版每分鐘的請求次數將被限制在 5
-                            次以內），本產生器在每個點位請求完成後，皆會<strong>自動溫和冷卻 2 秒</strong>。</li>
-                        <li><strong>自動休眠重試</strong>：若不幸觸發了伺服器的 429 限制，主控台會輸出警示，並<strong>自動原地暫停 65
+                            次以內），本產生器在每個點位請求完成後，皆會<strong>自動冷卻 12 秒</strong>。</li>
+                        <li><strong>自動休眠重試</strong>：若不幸觸發了伺服器的流量限制(ERROR 429)，主控台會輸出警示，並<strong>自動原地暫停 65
                                 秒</strong>後再次發送，請不要關閉或重整網頁。</li>
                     </ul>
                 </div>
@@ -317,7 +317,7 @@
             const closeAlertBtn = document.getElementById('close-alert-btn');
 
             // API 參數控制
-            const SLEEP_MS = 2000;
+            const SLEEP_MS = 12000;
             const RETRY_429_MS = 65000;
             let finalFeatures = [];
             let failedList = [];
