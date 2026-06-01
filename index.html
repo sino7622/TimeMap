@@ -237,7 +237,7 @@
     </footer>
 
     <div id="info-modal"
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-xl w-full mx-4 overflow-hidden transform translate-y-4 transition-transform duration-300"
             id="modal-box">
             <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
@@ -713,7 +713,7 @@
                 const failureCount = failedList.length;
                 const processedCount = successCount + failureCount;
                 const unprocessedCount = totalPoints - processedCount;
-                writeLog("<br>=================== 📝 執行結果對帳表 ===================", 'success');
+                writeLog("<br>=================== 📝 執行結果 ===================", 'success');
                 writeLog(` 🟢 成功獲取數: ${successCount} / ${processedCount}`, 'success');
                 writeLog(` 🔴 失敗與遺漏數: ${failureCount} / ${processedCount}`, failureCount > 0 ? 'error' : 'success');
                 writeLog(` ⚪ 未處理筆數: ${unprocessedCount}`, 'success');
