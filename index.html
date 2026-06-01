@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TravelTime 等時圈產生器</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         /* 額外的精細樣式調整 */
         .custom-scrollbar::-webkit-scrollbar {
@@ -150,56 +151,66 @@
                         </button>
                     </div>
 
-                    <button id="start-btn"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 shadow-lg shadow-blue-200 active:transform active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed">
-                        🚀 依座標資料產生等時圈
-                    </button>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button id="start-btn"
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 shadow-lg shadow-blue-200 active:transform active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed">
+                            🚀 產生等時圈
+                        </button>
+                        <button id="abort-btn" disabled
+                            class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 shadow-lg shadow-rose-200 active:transform active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed">
+                            🛑 手動中斷執行
+                        </button>
+                    </div>
+
+                    <div id="status-box"
+                        class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden flex-col gap-4">
+                        <h3
+                            class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                            <span class="relative flex h-3 w-3">
+                                <span
+                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
+                            </span>
+                            任務進度與分析結果
+                        </h3>
+
+                        <div class="flex items-center justify-between">
+                            <span id="status-summary" class="font-semibold text-slate-700">準備中...</span>
+                            <span id="progress-percent" class="text-sm font-bold text-blue-600">0%</span>
+                        </div>
+
+                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                style="width: 0%"></div>
+                        </div>
+
+                        <div id="download-area" class="hidden flex-wrap gap-3 pt-2">
+                            <button id="download-geojson-btn"
+                                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"></path>
+                                </svg>
+                                下載等時圈 GeoJSON
+                            </button>
+                            <button id="download-failed-btn"
+                                class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-rose-100 hidden">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                    </path>
+                                </svg>
+                                下載失敗清單 CSV
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <section class="lg:col-span-7 flex flex-col gap-6">
-                <div id="status-box"
-                    class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden flex-col gap-4">
-                    <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-                        <span class="relative flex h-3 w-3">
-                            <span
-                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
-                        </span>
-                        任務進度與分析結果
-                    </h3>
-
-                    <div class="flex items-center justify-between">
-                        <span id="status-summary" class="font-semibold text-slate-700">準備中...</span>
-                        <span id="progress-percent" class="text-sm font-bold text-blue-600">0%</span>
-                    </div>
-
-                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                            style="width: 0%"></div>
-                    </div>
-
-                    <div id="download-area" class="hidden flex-wrap gap-3 pt-2">
-                        <button id="download-geojson-btn"
-                            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"></path>
-                            </svg>
-                            下載等時圈 GeoJSON
-                        </button>
-                        <button id="download-failed-btn"
-                            class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-rose-100 hidden">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                                </path>
-                            </svg>
-                            下載失敗清單 CSV
-                        </button>
-                    </div>
+                <div id="map" class="h-[320px] rounded-2xl shadow-lg border border-slate-800 overflow-hidden mb-6">
                 </div>
 
                 <div
@@ -285,6 +296,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // UI 控制元素
@@ -297,8 +309,7 @@
             const fileInput = document.getElementById('csv-file');
             const fileNameDisplay = document.getElementById('file-name-display');
             const downloadTemplateBtn = document.getElementById('download-template-btn');
-            const startBtn = document.getElementById('start-btn');
-
+            const startBtn = document.getElementById('start-btn'); const abortBtn = document.getElementById('abort-btn');
             const statusBox = document.getElementById('status-box');
             const statusSummary = document.getElementById('status-summary');
             const progressBar = document.getElementById('progress-bar');
@@ -308,6 +319,39 @@
             const downloadFailedBtn = document.getElementById('download-failed-btn');
 
             const logContainer = document.getElementById('log-container');
+
+            const map = L.map('map', { zoomControl: true }).setView([23.7, 120.97], 7);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 18,
+            }).addTo(map);
+            const isochroneLayer = L.geoJSON(null, {
+                style: () => ({
+                    color: '#22c55e',
+                    weight: 2,
+                    opacity: 0.9,
+                    fillOpacity: 0.2,
+                }),
+                onEachFeature: (feature, layer) => {
+                    const title = feature.properties?.location_id || 'Isochrone';
+                    const minutes = feature.properties?.time_minutes;
+                    const popupText = minutes ? `${title} (${minutes} 分)` : title;
+                    layer.bindPopup(popupText);
+                }
+            }).addTo(map);
+
+            function resetMap() {
+                isochroneLayer.clearLayers();
+                map.setView([23.7, 120.97], 7);
+            }
+
+            function addIsochroneGeoJson(geojson) {
+                if (!geojson) return;
+                isochroneLayer.addData(geojson);
+                if (isochroneLayer.getLayers().length > 0) {
+                    map.fitBounds(isochroneLayer.getBounds(), { padding: [20, 20] });
+                }
+            }
             const clearLogBtn = document.getElementById('clear-log-btn');
 
             const alertBanner = document.getElementById('alert-banner');
@@ -321,6 +365,23 @@
             const RETRY_429_MS = 65000;
             let finalFeatures = [];
             let failedList = [];
+            let abortController = null;
+            let isAborted = false;
+            let successPoints = 0;
+            let processedPoints = 0;
+
+            const sleep = (ms, signal) => new Promise(resolve => {
+                const timeout = setTimeout(() => {
+                    if (signal) signal.removeEventListener('abort', onAbort);
+                    resolve();
+                }, ms);
+                const onAbort = () => {
+                    clearTimeout(timeout);
+                    signal.removeEventListener('abort', onAbort);
+                    resolve();
+                };
+                if (signal) signal.addEventListener('abort', onAbort);
+            });
 
             // 1. ℹ️ 說明彈窗控制
             const openModal = () => {
@@ -449,8 +510,16 @@
                 logContainer.innerHTML = '<span class="text-slate-500">// 控制台已清空。</span>';
             });
 
-            // 輔助休眠方法
-            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            abortBtn.addEventListener('click', () => {
+                if (!abortController) return;
+                if (isAborted) return;
+                isAborted = true;
+                abortController.abort();
+                writeLog('🛑 使用者已要求手動中斷。', 'warning');
+                statusSummary.innerHTML = '🛑 已手動中斷執行，正在停止中...';
+                abortBtn.disabled = true;
+                startBtn.disabled = false;
+            });
 
             // 6. 解析 CSV 資料
             function parseCSV(text) {
@@ -513,6 +582,12 @@
 
                 finalFeatures = [];
                 failedList = [];
+                successPoints = 0;
+                processedPoints = 0;
+                isAborted = false;
+                abortController = new AbortController();
+                abortBtn.disabled = false;
+                resetMap();
 
                 const file = fileInput.files[0];
                 let text;
@@ -521,6 +596,7 @@
                 } catch (e) {
                     showAlert("檔案讀取錯誤", "無法讀取該 CSV 檔案，請確定檔案無毀損。");
                     startBtn.disabled = false;
+                    abortBtn.disabled = true;
                     return;
                 }
 
@@ -569,7 +645,7 @@
                     let success = false;
                     let retry429Count = 0;
 
-                    while (!success) {
+                    while (!success && !isAborted) {
                         statusSummary.innerHTML = `🔄 正在處理：點位 ${pt.id} (${currentCount}/${totalPoints})`;
                         writeLog(`[${currentCount}/${totalPoints}] 發送點位: ${pt.id} ... `);
 
@@ -577,7 +653,8 @@
                             const response = await fetch(url, {
                                 method: 'POST',
                                 headers: headers,
-                                body: JSON.stringify(payload)
+                                body: JSON.stringify(payload),
+                                signal: abortController.signal
                             });
 
                             if (response.status === 200) {
@@ -589,18 +666,20 @@
                                         f.properties.location_id = pt.id;
                                         f.properties.time_minutes = travelMinutes;
                                         finalFeatures.push(f);
+                                        addIsochroneGeoJson(f);
                                     });
+                                    successPoints++;
                                 } else {
                                     writeLog(`⚠️ [空值] API 未回傳有效的等時圈形狀`, 'warning');
                                     failedList.push({ id: pt.id, reason: 'Empty features' });
                                 }
                                 success = true;
-                                await sleep(SLEEP_MS);
+                                if (!isAborted) await sleep(SLEEP_MS, abortController.signal);
 
                             } else if (response.status === 429) {
                                 retry429Count++;
                                 writeLog(`⚠️ [429 流量管制] (第 ${retry429Count} 次)。開始原地自動冷卻 65 秒後重試...`, 'warning');
-                                await sleep(RETRY_429_MS);
+                                await sleep(RETRY_429_MS, abortController.signal);
                             } else {
                                 const errText = await response.text();
                                 writeLog(`❌ [失敗] API 錯誤碼 ${response.status}: ${errText}`, 'error');
@@ -610,26 +689,43 @@
                             }
 
                         } catch (err) {
+                            if (err.name === 'AbortError') {
+                                writeLog(`🛑 [已中止] 點位 ${pt.id} 的請求已被取消。`, 'warning');
+                                isAborted = true;
+                                break;
+                            }
                             writeLog(`❌ [網路錯誤] 原因: ${err.message}`, 'error');
                             failedList.push({ id: pt.id, reason: err.message });
                             success = true;
-                            await sleep(SLEEP_MS);
+                            if (!isAborted) await sleep(SLEEP_MS, abortController.signal);
                         }
                     }
 
-                    const percent = Math.round((currentCount / totalPoints) * 100);
+                    if (success) processedPoints++;
+                    if (isAborted) break;
+
+                    const percent = Math.round((processedPoints / totalPoints) * 100);
                     progressBar.style.width = `${percent}%`;
                     progressPercent.textContent = `${percent}%`;
                 }
 
-                const successCount = totalPoints - failedList.length;
+                const successCount = successPoints;
+                const failureCount = failedList.length;
+                const processedCount = successCount + failureCount;
+                const unprocessedCount = totalPoints - processedCount;
                 writeLog("<br>=================== 📝 執行結果對帳表 ===================", 'success');
-                writeLog(` 🟢 成功獲取數: ${successCount} / ${totalPoints}`, 'success');
-                writeLog(` 🔴 失敗與遺漏數: ${failedList.length} / ${totalPoints}`, failedList.length > 0 ? 'error' : 'success');
+                writeLog(` 🟢 成功獲取數: ${successCount} / ${processedCount}`, 'success');
+                writeLog(` 🔴 失敗與遺漏數: ${failureCount} / ${processedCount}`, failureCount > 0 ? 'error' : 'success');
+                writeLog(` ⚪ 未處理筆數: ${unprocessedCount}`, 'success');
                 writeLog("========================================================", 'success');
 
-                statusSummary.innerHTML = `🎉 任務完成！成功: ${successCount} 筆，失敗: ${failedList.length} 筆`;
+                if (isAborted) {
+                    statusSummary.innerHTML = `🛑 已手動中斷，已處理 ${processedCount} / ${totalPoints} 筆，成功 ${successCount} 筆，失敗 ${failureCount} 筆，未處理 ${unprocessedCount} 筆`;
+                } else {
+                    statusSummary.innerHTML = `🎉 任務完成！成功: ${successCount} 筆，失敗: ${failureCount} 筆，未處理: ${unprocessedCount} 筆`;
+                }
                 downloadArea.classList.remove('hidden');
+                abortBtn.disabled = true;
 
                 if (finalFeatures.length > 0) {
                     downloadGeojsonBtn.onclick = () => {
