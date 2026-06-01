@@ -47,7 +47,7 @@
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900 tracking-tight">TravelTime 等時圈產生器</h1>
                     <p class="text-sm text-slate-500">上傳座標・批次轉換。使用前請先前往 <a href="https://www.traveltime.com/"
-                            target="_blank" class="text-blue-600 hover:underline">TravelTime 官網</a>進行註冊。</p>
+                            target="_blank" class="text-blue-600 hover:underline">TravelTime 官網</a>進行註冊取得API資訊。</p>
                 </div>
             </div>
 
@@ -258,9 +258,9 @@
                     <h4 class="font-bold text-slate-900 flex items-center gap-1.5 mb-1 text-rose-600">2. 流量與頻率限制 (Rate
                         Limits)</h4>
                     <ul class="list-disc pl-5 mt-1 space-y-1">
-                        <li><strong>防爆流量保護 (429 避讓)</strong>：為避免觸發 TravelTime API 對免費與一般標準方案設定的每分鐘頻率管制（429 Too Many
-                            Requests），本產生器在每個點位請求完成後，皆會<strong>自動溫和冷卻 2 秒</strong>。</li>
-                        <li><strong>原地自動休眠重試</strong>：若不幸觸發了伺服器的 429 限制，主控台會輸出警示，並<strong>自動原地暫停 65
+                        <li><strong>請求流量保護</strong>：為避免觸發 TravelTime API 對免費與一般標準方案設定的每分鐘頻率管制（免費版每分鐘的請求次數將被限制在 5
+                            次以內），本產生器在每個點位請求完成後，皆會<strong>自動溫和冷卻 2 秒</strong>。</li>
+                        <li><strong>自動休眠重試</strong>：若不幸觸發了伺服器的 429 限制，主控台會輸出警示，並<strong>自動原地暫停 65
                                 秒</strong>後再次發送，請不要關閉或重整網頁。</li>
                     </ul>
                 </div>
@@ -491,7 +491,7 @@
                 const transportType = document.getElementById('transport-type').value;
 
                 if (!apiId || !apiKey) {
-                    showAlert("請填入 API 設定", "請先提供 TravelTime 的 Application ID 與 API Key 才能發起請求。");
+                    showAlert("請填入 API 設定", "請先提供 TravelTime 的 Application ID 與 Application Keys 才能發起請求。");
                     return;
                 }
                 if (fileInput.files.length === 0) {
